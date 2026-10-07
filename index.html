@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hyperspace - Diabetes Mellitus Digital Breakout Chart</title>
+  <style>
+    :root {
+      --epic-blue: #005fb2;
+      --epic-light: #eef4fb;
+      --epic-dark: #1a1a1a;
+      --success-green: #2e7d32;
+      --warning-orange: #ed6c02;
+      --error-red: #d32f2f;
+      --border-color: #cbd5e1;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 20px;
+      color: var(--epic-dark);
+    }
+
+    .chart-container {
+      max-width: 1240px;
+      margin: 0 auto;
+      background: white;
+      border: 1px solid #cccccc;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .header {
+      background: var(--epic-blue);
+      color: white;
+      padding: 12px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-title {
+      font-weight: bold;
+      font-size: 1.08em;
+    }
+
+    .header-meta {
+      font-size: 0.8em;
+      color: #dbeafe;
+    }
+
+    .patient-banner {
+      background: #d1e3f8;
+      padding: 10px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      font-size: 0.88em;
+      border-bottom: 2px solid var(--epic-blue);
+      color: #333;
+    }
+
+    .patient-banner-left {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .patient-banner-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      color: var(--epic-blue);
+      font-size: 0.9em;
+    }
+
+    .reset-btn {
+      background: transparent;
+      border: 1px solid #94a3b8;
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 0.85em;
+      cursor: pointer;
+      color: #475569;
+    }
+    .reset-btn:hover {
+      color: var(--error-red);
+      border-color: var(--error-red);
+    }
+
+    .main-layout {
+      display: flex;
+      min-height: 820px;
+    }
+
+    .sidebar {
+      width: 280px;
+      background: #f8f9fa;
+      border-right: 1px solid #ddd;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .tab-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 12px 16px;
+      border: none;
+      border-bottom: 1px solid #eee;
+      background: transparent;
+      cursor: pointer;
+      font-weight: 600;
+      color: #555;
+      transition: 0.2s;
+      font-size: 0.82em;
+      text-transform: uppercase;
+      text-align: left;
+      font-family: inherit;
+    }
+
+    .tab-btn:hover {
+      background: #e9ecef;
+    }
+
+    .tab-btn.active {
+      background: white;
+      color: var(--epic-blue);
+      border-left: 6px solid var(--epic-blue);
+    }
+
+    .tab-status-code {
+      font-family: monospace;
+      font-size: 0.92em;
+      font-weight: bold;
+      color: var(--success-green);
+    }
+
+    .tab-status-lock {
+      font-size: 0.9em;
+      color: #94a3b8;
+    }
+
+    .content-area {
+      flex: 1;
+      padding: 30px;
+      background: white;
+    }
+
+    .puzzle-section {
+      display: none;
+    }
+
+    .puzzle-section.active {
+      display: block;
+    }
+
+    .section-header-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-source {
+      font-size: 0.78em;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    hr {
+      border: 0;
+      border-top: 1px solid #eee;
+      margin: 16px 0;
+    }
+
+    .clue-card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 5px solid var(--epic-blue);
+      margin-bottom: 25px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border: 1px solid #eee;
+      border-left-width: 5px;
+      border-left-color: var(--epic-blue);
+      line-height: 1.6;
+    }
+
+    .clue-label {
+      font-weight: bold;
+      color: var(--epic-blue);
+      margin-bottom: 6px;
+      font-size: 0.82em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .clinical-note {
+      background: #fcfcfc;
+      border: 1px solid #ddd;
+      padding: 16px;
+      margin-bottom: 24px;
+      white-space: pre-wrap;
+      font-size: 0.95em;
+      border-radius: 4px;
+      line-height: 1.55;
+      color: #1e293b;
+    }
+
+    .ehr-table-box {
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .ehr-table-title {
+      background: var(--epic-light);
+      padding: 8px 16px;
+      font-size: 0.75em;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--epic-blue);
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .ehr-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88em;
+      text-align: left;
+    }
+
+    .ehr-table th {
+      background: #f8fafc;
+      padding: 10px 16px;
+      font-size: 0.85em;
+      font-weight: bold;
+      color: #334155;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .ehr-table td {
+      padding: 10px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #1e293b;
+      white-space: pre-line;
+      vertical-align: top;
+    }
+
+    .ehr-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .ehr-table td:first-child {
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    /* Flowchart Styling */
+    .flow-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin: 16px 0 24px 0;
+    }
+
+    .flow-box {
+      border: 2px solid var(--epic-blue);
+      padding: 12px 20px;
+      border-radius: 8px;
+      background: white;
+      width: 80%;
+      text-align: center;
+    }
+
+    .flow-box.highlight {
+      background: #fff3e0;
+    }
+
+    .flow-box.missing {
+      border-style: dashed;
+      background: #fffbeb;
+    }
+
+    .flow-arrow {
+      color: var(--epic-blue);
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    /* Lock Container */
+    .lock-container {
+      background: #fffaf5;
+      padding: 24px;
+      border-radius: 8px;
+      border: 1px solid #ffe8d1;
+      border-left: 5px solid var(--warning-orange);
+    }
+
+    .task-label {
+      font-weight: bold;
+      color: var(--warning-orange);
+      margin-bottom: 8px;
+      font-size: 0.82em;
+    }
+
+    .task-question {
+      font-size: 1em;
+      font-weight: 500;
+      color: #0f172a;
+      line-height: 1.5;
+    }
+
+    .task-format {
+      margin-top: 4px;
+      font-size: 0.78em;
+      color: #64748b;
+    }
+
+    .lock-input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ccc;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 1.15em;
+      text-transform: uppercase;
+      margin-top: 12px;
+      outline: none;
+    }
+
+    .lock-input:focus {
+      border-color: var(--epic-blue);
+    }
+
+    .lock-input.solved {
+      border-color: var(--success-green);
+      color: var(--success-green);
+      font-weight: bold;
+    }
+
+    .unlock-content {
+      display: none;
+      margin-top: 18px;
+      padding: 16px;
+      background: #f1f8e9;
+      border: 1px solid var(--success-green);
+      border-radius: 4px;
+    }
+
+    .unlock-content.visible {
+      display: block;
+    }
+
+    .unlock-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      color: var(--success-green);
+      font-weight: bold;
+      font-size: 1em;
+    }
+
+    .next-tab-btn {
+      background: var(--success-green);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 14px;
+      font-size: 0.78em;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .next-tab-btn:hover {
+      background: #1b5e20;
+    }
+
+    .unlock-rationale {
+      margin-top: 8px;
+      font-size: 0.82em;
+      color: #334155;
+      line-height: 1.5;
+      font-weight: normal;
+    }
+
+    /* Final Discharge Grid */
+    .final-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      margin: 25px 0;
+    }
+
+    .code-cell {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .code-cell-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72em;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 4px;
+    }
+
+    .sign-btn {
+      background: var(--epic-blue);
+      color: white;
+      padding: 15px 40px;
+      border-radius: 50px;
+      cursor: pointer;
+      font-weight: bold;
+      border: none;
+      width: 100%;
+      font-size: 1.1em;
+    }
+
+    .sign-btn:hover {
+      background: #004a8f;
+    }
+
+    .celebration {
+      display: none;
+      text-align: center;
+      padding: 40px;
+      border: 3px solid var(--success-green);
+      border-radius: 12px;
+      background: #f0fdf4;
+    }
+
+    .celebration.visible {
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .main-layout {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+        border-right: none;
+        border-bottom: 1px solid #ddd;
+      }
+      .tab-btn {
+        white-space: nowrap;
+        width: auto;
+      }
+      .final-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="chart-container">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title">Hyperspace - Diabetes Mellitus Digital Breakout Chart</div>
+    <div class="header-meta">Login: RN_STUDENT_2026 &middot; Unit: Endocrine &amp; Acute Care &middot; <span id="header-progress">Verified: 0/12 Codes</span></div>
+  </div>
+
+  <!-- Patient Banner -->
+  <div class="patient-banner">
+    <div class="patient-banner-left">
+      <span><strong>MILLER, ARTHUR</strong></span>
+      <span><strong>MRN:</strong> 00008472915</span>
+      <span><strong>Age:</strong> 58Y (M)</span>
+      <span><strong>Attending:</strong> Dr. Kent T. Campus</span>
+      <span style="color: var(--error-red); font-weight: bold;">&#9888;&#65039; ALLERGY: SULFA, PENICILLIN</span>
+    </div>
+    <div class="patient-banner-right">
+      <span id="banner-unlocked-count">Unlocked Codes: 0 of 12</span>
+      <button class="reset-btn" onclick="resetChart()">Reset</button>
+    </div>
+  </div>
+
+  <!-- Main Split Layout -->
+  <div class="main-layout">
+    <div class="sidebar" id="sidebar-tabs">
+      <!-- Populated by JS -->
+    </div>
+
+    <div class="content-area">
+      <!-- 0. CHART OVERVIEW -->
+      <div id="section-0" class="puzzle-section active">
+        <h1 style="color: var(--epic-blue); margin-top: 0; font-size: 1.5em;">Diabetes Mellitus Digital Breakout Chart: Instructions</h1>
+        <hr />
+        <div class="clue-card">
+          <p style="font-size: 1em; margin: 0;">
+            Welcome to the <strong>Diabetes Mellitus Digital Breakout Chart</strong>. You are tasked with verifying the endocrine and acute/chronic diabetes care record for <strong>Arthur Miller</strong>. All clinical tasks and critical thinking locks are pulled directly from your <strong>Diabetes Mellitus Study Sheets</strong>.
+          </p>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          <div style="display: flex; align-items: flex-start; gap: 15px;">
+            <div style="background: var(--epic-blue); color: white; width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: bold;">1</div>
+            <div><strong>Navigate the Tabs:</strong> Use the left EHR sidebar to access all 12 clinical encounters.</div>
+          </div>
+          <div style="display: flex; align-items: flex-start; gap: 15px;">
+            <div style="background: var(--epic-blue); color: white; width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: bold;">2</div>
+            <div><strong>Solve the Puzzles:</strong> Read the clinical clues and EHR flowsheet tables. Reference your 4 Diabetes Mellitus Study Sheets to enter the correct clinical response.</div>
+          </div>
+          <div style="display: flex; align-items: flex-start; gap: 15px;">
+            <div style="background: var(--epic-blue); color: white; width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: bold;">3</div>
+            <div><strong>Validation Codes:</strong> Solving each nursing task immediately reveals a 4-digit <strong>Validation Code</strong> and unlocks the clinical rationale.</div>
+          </div>
+          <div style="display: flex; align-items: flex-start; gap: 15px;">
+            <div style="background: var(--epic-blue); color: white; width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: bold;">4</div>
+            <div><strong>Final Lock:</strong> Enter all 12 validation codes in the <strong>Discharge Summary</strong> tab to sign and lock the chart.</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 32px; padding: 20px; background: #fffde7; border-radius: 8px; border: 1px solid #fbc02d; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 15px;">
+          <div>
+            <div style="font-weight: bold; color: #0f172a;">Ready to Begin Your Shift?</div>
+            <div style="font-size: 0.9em; color: #334155;">Start with <strong>ADMISSION (1)</strong> to evaluate Arthur Miller's classic presenting symptoms.</div>
+          </div>
+          <button onclick="switchTab(1)" style="background: var(--epic-blue); color: white; border: none; border-radius: 6px; padding: 10px 20px; font-weight: bold; cursor: pointer;">Start Admission (Tab 1) &rarr;</button>
+        </div>
+      </div>
+
+      <!-- Dynamic Puzzle Sections 1..12 -->
+      <div id="puzzle-sections-container"></div>
+
+      <!-- 13. DISCHARGE SUMMARY -->
+      <div id="section-13" class="puzzle-section">
+        <div style="max-width: 820px; margin: 0 auto;">
+          <h2 style="text-align: center; margin-bottom: 4px;">FINAL CHART SIGN-OFF</h2>
+          <p style="text-align: center; color: #64748b; font-size: 0.9em; margin-top: 0;">
+            Enter all 12 Validation Codes collected from the clinical records to finalize <strong>MILLER, ARTHUR</strong>'s Diabetes Mellitus chart.
+          </p>
+          <hr />
+
+          <div id="final-form-area">
+            <div class="final-grid" id="verification-inputs"></div>
+
+            <button class="sign-btn" onclick="checkFinalCodes()">SIGN AND LOCK CHART</button>
+
+            <div id="final-error" style="color: var(--error-red); background: #fef2f2; border: 1px solid #fecaca; padding: 12px; border-radius: 6px; text-align: center; margin-top: 20px; font-weight: bold; font-size: 0.9em; display: none;">
+              Chart Verification Failed: One or more validation codes are missing or invalid.
+            </div>
+          </div>
+
+          <div id="celebration" class="celebration">
+            <h1 style="color: var(--success-green); margin-top: 0;">CHART FINALIZED</h1>
+            <p style="font-size: 1.15em; color: #1e293b;">
+              Congratulations, RN! You have successfully verified Arthur Miller's record and demonstrated comprehensive clinical competence in Diabetes Mellitus Nursing Care.
+            </p>
+            <div style="margin-top: 30px; border-top: 2px solid #ccc; padding-top: 15px;">
+              <span style="font-family: Georgia, serif; font-style: italic; font-size: 2em; color: #0f172a;">/s/ RN_STUDENT_PRO</span>
+              <br />
+              <small style="color: #475569; font-size: 0.8em;">Electronic Signature Applied Successfully &middot; Verified against Dr. B's Diabetes Mellitus Curriculum</small>
+            </div>
+            <div style="margin-top: 24px;">
+              <button onclick="resetChart()" style="background: white; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 16px; font-size: 0.82em; font-weight: 600; cursor: pointer; color: #334155;">Start New Student Session</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const PUZZLES = [
+    {
+      id: 1,
+      tabLabel: "📋 ADMISSION (1)",
+      sectionTitle: "ADMISSION ENCOUNTER: CLASSIC MANIFESTATIONS",
+      studySheetSource: "Study Sheet 1: Diabetes Mellitus — Signs & Symptoms",
+      clinicalClue: "Subjective: Patient presents to the Emergency Department reporting unintentional weight loss, profound weakness, and persistent fatigue over the past 3 weeks.\nObjective: Triage nurse documents the three classic \"P\" manifestations of Diabetes Mellitus Type I (which may also manifest in Type II): excessive urination, excessive thirst, and excessive hunger.",
+      clinicalTable: {
+        title: "EHR Triage Comparison: DM Type I vs. DM Type II",
+        headers: ["Feature", "DM Type I", "DM Type II"],
+        rows: [
+          ["Primary Causes", "Autoimmune disorder, Genetic link, Idiopathic diabetes, Latent autoimmune diabetes in adults", "Genetic link, Insulin resistance, ↓ insulin production, Inappropriate hepatic glucose production"],
+          ["Signs & Symptoms", "Classic symptoms (3 \"Poly-\"s), Weight loss, Weakness, Fatigue", "Nonspecific symptoms, Fatigue, Recurrent infection (yeast/candida), Prolonged wound healing, Visual changes"],
+          ["Core Treatment", "Insulin Therapy + Lifestyle modifications (Diet, Exercise, Self-monitoring)", "Oral Anti-Diabetic Therapy, Insulin if necessary + Lifestyle modifications"]
+        ]
+      },
+      nursingTask: "Identify the 3 classic \"Poly-\" symptoms of Diabetes Mellitus in alphabetical order",
+      placeholder: "POLY...POLY...POLY...",
+      formatHint: "Three words, alphabetical order, no spaces",
+      pattern: "^[Pp]olydipsia[Pp]olyphagia[Pp]olyuria$",
+      accepted: ["polydipsiapolyphagiapolyuria", "polydipsia,polyphagia,polyuria", "polydipsia polyphagia polyuria"],
+      validationCode: "7410",
+      clinicalRationale: "The three classic manifestations of Diabetes Mellitus are Polydipsia (excessive thirst), Polyphagia (excessive hunger), and Polyuria (excessive urination due to osmotic diuresis)."
+    },
+    {
+      id: 2,
+      tabLabel: "👤 HISTORY/PHYSICAL (2)",
+      sectionTitle: "HISTORY & PHYSICAL: THE PANCREAS & GLUCOSE",
+      studySheetSource: "Study Sheet 1: The Pancreas & Insulin/Glucose Physiology",
+      clinicalClue: "Endocrine Pathophysiology Note:\n• The Pancreas is home to the islets of Langerhans: α-cells (alpha) secrete glucagon; β-cells (beta) secrete insulin.\n• Insulin is released continuously into the bloodstream in small increments with larger amounts released after food (Basal/Bolus concept).\n• Cells break down glucose to make energy, while liver and muscle cells store excess glucose as glycogen.",
+      clinicalTable: {
+        title: "Pancreatic Islets of Langerhans & Glucose Homeostasis",
+        headers: ["Physiologic Component", "Clinical Function / Mechanism"],
+        rows: [
+          ["α-cells (Alpha cells)", "Secrete glucagon to raise blood glucose"],
+          ["β-cells (Beta cells)", "Secrete insulin continuously (Basal) & after meals (Bolus)"],
+          ["Normal Stabilized BG Range", "?? to ??? mg/dL (Locked in Nursing Task below)"],
+          ["Hepatic & Muscle Storage", "Store excess glucose as glycogen"]
+        ]
+      },
+      nursingTask: "Insulin stabilizes blood glucose levels within what normal range in mg/dL? (Format: ##-###):",
+      placeholder: "E.G. ##-###",
+      formatHint: "Format: ##-### (numbers separated by a hyphen)",
+      pattern: "^74-106$",
+      accepted: ["74-106", "74to106", "74-106mg/dl", "74 - 106"],
+      validationCode: "3126",
+      clinicalRationale: "Endogenous basal/bolus insulin release stabilizes normal blood glucose within the range of 74 to 106 mg/dL."
+    },
+    {
+      id: 3,
+      tabLabel: "🧪 DIAGNOSTICS (3)",
+      sectionTitle: "DIAGNOSTIC LABS: DM DIAGNOSTIC CRITERIA",
+      studySheetSource: "Study Sheet 1: Diabetes Mellitus — Diagnostics",
+      clinicalClue: "Laboratory Diagnostic Panel Review:\n• Two-hour plasma glucose level during OGTT (with glucose load of 75 g): 200 mg/dL or higher\n• Classic symptoms of hyperglycemia with random plasma glucose level: 200 mg/dL or higher\n• Nurse must verify the diagnostic threshold values for Hemoglobin A1C and Fasting Plasma Glucose.",
+      clinicalTable: {
+        title: "Diagnostic Criteria for Diabetes Mellitus",
+        headers: ["Diagnostic Test", "Clinical Threshold for Diagnosis", "Status"],
+        rows: [
+          ["Hemoglobin A1C Level", "≥ ?.?% or higher", "Pending RN Verification"],
+          ["Fasting Plasma Glucose (FPG)", "Higher than ??? mg/dL", "Pending RN Verification"],
+          ["2-Hour Plasma Glucose (OGTT, 75 g load)", "200 mg/dL", "Verified"],
+          ["Random Plasma Glucose + Classic Symptoms", "200 mg/dL or higher", "Verified"]
+        ]
+      },
+      nursingTask: "What is the diagnostic threshold for Hemoglobin A1C (%) and Fasting Plasma Glucose (mg/dL)? (Format: #.#-###, e.g. 5.5-100):",
+      placeholder: "#.#-###",
+      formatHint: "Format: #.#-### (A1C number, hyphen, Fasting glucose number)",
+      pattern: "^6\\.5-126$",
+      accepted: ["6.5-126", "6.5%-126", "6.5%126", "6.5/126"],
+      validationCode: "6520",
+      clinicalRationale: "Diabetes Mellitus is diagnosed when Hemoglobin A1C is 6.5% or higher, or Fasting Plasma Glucose is higher than 126 mg/dL."
+    },
+    {
+      id: 4,
+      tabLabel: "📝 ORDERS (4)",
+      sectionTitle: "PROVIDER ORDERS: DKA & IV INSULIN THERAPY",
+      studySheetSource: "Study Sheet 2: DKA & HHS / IV Insulin Therapy",
+      clinicalClue: "Urgent Critical Care Note:\n• Patient developed Diabetic Ketoacidosis (DKA) secondary to profound insulin deficiency (#1 Precipitating Factor: Illness/Infection).\n• Assessment reveals Hyperglycemia (≥ 250 mg/dL), Ketosis (sweet, fruity breath odor), Acidosis (pH < 7.30, Bicarbonate < 16 mEq/L, Kussmaul respirations), and Dehydration from osmotic diuresis.\n• Treatment ABCs initiated: 1. IV Fluids (0.9% NaCl), 2. IV Insulin drip (Regular insulin ONLY, Q1H glucose monitoring), 3. IV Electrolyte Replacement.",
+      clinicalTable: {
+        title: "IV Regular Insulin Drip Protocol (DKA / HHS)",
+        headers: ["Protocol Parameter", "Clinical Directive"],
+        rows: [
+          ["Insulin Type Allowed IV", "Regular insulin ONLY (MUST be on an infusion pump)"],
+          ["Point-of-Care BG Monitoring", "Every 1 hour (Q1H)"],
+          ["Dextrose IV Addition Threshold", "Initiate Dextrose IV per protocol as BG reaches ??? mg/dL"],
+          ["Essential Electrolyte Co-Admin", "Plan to administer ?? replacement (shifts into cell with insulin)"]
+        ]
+      },
+      nursingTask: "At what blood glucose level (mg/dL) do you initiate IV Dextrose during an IV insulin drip, and what electrolyte symbol (without +/-) must be replaced as insulin drives it into the cell?",
+      placeholder: "###X",
+      formatHint: "3-digit BG level followed immediately by the chemical symbol",
+      pattern: "^250[Kk]\\+?$",
+      accepted: ["250k", "250k+", "250-k", "250-k+", "250potassium"],
+      validationCode: "8925",
+      clinicalRationale: "During IV Regular insulin therapy for DKA, Dextrose IV is initiated when blood glucose reaches 250 mg/dL to prevent rapid hypoglycemia/cerebral edema, and Potassium (K+) is replaced because insulin drives both glucose and K+ into cells."
+    },
+    {
+      id: 5,
+      tabLabel: "💓 VITALS & POC (5)",
+      sectionTitle: "VITAL SIGNS & BEDSIDE POC: HYPOGLYCEMIA RULE OF 15",
+      studySheetSource: "Study Sheet 2: Hypoglycemia — Signs, Symptoms & Rule of 15",
+      clinicalClue: "Bedside Nursing Rapid Assessment:\n• Patient complains of shakiness, tremors, palpitations/tachycardia, nervousness, anxiety, and difficulty focusing.\n• Nurse observes pallor and diaphoresis.\n• Bedside POC Blood Glucose is 56 mg/dL. Patient is awake, oriented, and intact swallowing is verified.",
+      clinicalTable: {
+        title: "Hypoglycemia Management: The Rule of 15 Protocol",
+        headers: ["Step", "Clinical Nursing Action"],
+        rows: [
+          ["1. Initial Simple CHO Dose", "Administer ?? g of a simple carbohydrate (avoid foods with fat)"],
+          ["2. Recheck Timing", "Recheck blood glucose level in ?? minutes"],
+          ["3. Repeat Threshold", "Repeat treatment if blood glucose is still < ?? mg/dL"],
+          ["4. Maintenance", "Give complex carbohydrate (CHO) after recovery to prevent recurrence"]
+        ]
+      },
+      nursingTask: "Complete the \"Rule of 15\": How many grams of simple carbohydrate, how many minutes until recheck, and repeat if BG remains below what number? (Format: ##-##-##):",
+      placeholder: "##-##-##",
+      formatHint: "Format: ##-##-## (Grams - Minutes - BG Threshold)",
+      pattern: "^15-15-70$",
+      accepted: ["15-15-70", "15/15/70", "15 15 70"],
+      validationCode: "1570",
+      clinicalRationale: "The Rule of 15 states: Give 15 g of a simple carbohydrate, recheck blood glucose in 15 minutes, and repeat if still < 70 mg/dL. Avoid fat during acute treatment and provide a complex CHO once recovered."
+    },
+    {
+      id: 6,
+      tabLabel: "🚨 ACUTE CARE (6)",
+      sectionTitle: "ACUTE CARE HYPOGLYCEMIA & SLIDING SCALE",
+      studySheetSource: "Study Sheet 2 (Acute Care) & Study Sheet 4 (Sliding Scale Insulin)",
+      clinicalClue: "Acute Care & Sliding Scale Orders:\n• Unresponsive Hypoglycemia: Assess LOC & swallowing. If NPO/unable to swallow, administer IV Push Dextrose or Glucagon 1 mg IM or SQ.\n• Sliding Scale Insulin: Covers what the BG level is right now (not what it will be after eating). Usually rapid-acting or Regular insulin.",
+      clinicalTable: {
+        title: "Acute Care Rescue & Sliding Scale Action Thresholds",
+        headers: ["Clinical Scenario", "Order / Protocol Specification"],
+        rows: [
+          ["Severe Hypoglycemia (IV Access)", "Administer 1 Amp of D?? IVP (or Glucagon 1 mg IM/SQ)"],
+          ["Sliding Scale Low Threshold", "BG ≤ 70 mg/dL → Initiate Hypoglycemic Protocol"],
+          ["Sliding Scale High Threshold", "BG ≥ ??? mg/dL → Call Healthcare Provider (HCP)"]
+        ]
+      },
+      nursingTask: "In acute care hypoglycemia, what concentration of Dextrose (D##) is pushed IV, and on a Sliding Scale, at or above what BG level must you call the HCP? (Format: D##-###):",
+      placeholder: "D##-###",
+      formatHint: "Format: D##-### (e.g., D10-400)",
+      pattern: "^[Dd]50-350$",
+      accepted: ["d50-350", "50-350", "d50350"],
+      validationCode: "5035",
+      clinicalRationale: "In acute care, severe hypoglycemia is treated with an Amp of D50 IVP (or Glucagon 1 mg IM/SQ). On a sliding scale, BG ≤ 70 triggers the hypoglycemic protocol and BG ≥ 350 requires calling the HCP."
+    },
+    {
+      id: 7,
+      tabLabel: "💉 INSULIN MAR (7)",
+      sectionTitle: "MAR: INSULIN TIMING & CRASH WINDOWS",
+      studySheetSource: "Study Sheet 4: Insulin Pharmacokinetics & High-Risk Meds",
+      clinicalClue: "High-Risk Medication Alert:\n• All insulin requires 2-nurse verification!\n• Nurse is preparing morning insulins and educating the patient on \"When do you need to eat?\" and \"When are you going to crash?\" (peak hypoglycemia risk).",
+      clinicalTable: {
+        title: "Insulin Administration & Hypoglycemia Crash Reference Table",
+        headers: ["Type of Insulin", "Name", "When do you need to eat?", "When are you going to crash?"],
+        rows: [
+          ["Bolus: Rapid-acting", "Aspart (Novolog), Lispro (Humalog)", "Food in front of them / within 10-15 minutes", "Before the next meal / around ? hours"],
+          ["Bolus: Short-acting", "Novolin R, Humulin R", "Food in front of them / within 25-30 minutes", "Before the next meal / around ? hours"],
+          ["Basal: Intermediate-acting", "NPH, Novolin N, Humulin N", "Usually taken with bolus insulins, follow their criteria", "2 meals later / around ?? hours"],
+          ["Basal: Long-acting", "Glargine (Lantus), Detemir (Levemir), Degludec (Tresiba)", "X (No meal timing required)", "X (Peakless)"]
+        ]
+      },
+      nursingTask: "Enter the \"crash\" time (in hours) for Rapid-acting, Short-acting, and Intermediate-acting (NPH) insulins in order (Format: #-#-##):",
+      placeholder: "#-#-##",
+      formatHint: "Format: #-#-## (Rapid hours - Short hours - Intermediate hours)",
+      pattern: "^3-5-12$",
+      accepted: ["3-5-12", "3/5/12", "3 5 12"],
+      validationCode: "4312",
+      clinicalRationale: "Patients are at highest risk of crashing (hypoglycemia peak) around 3 hours after Rapid-acting (Aspart/Lispro), around 5 hours after Short-acting (Regular), and around 12 hours (2 meals later) after Intermediate-acting (NPH). Long-acting basal insulins have no peak (\"X\")."
+    },
+    {
+      id: 8,
+      tabLabel: "💊 ORAL/NON-INSULIN (8)",
+      sectionTitle: "PHARMACOLOGY: ANTI-DIABETIC AGENTS",
+      studySheetSource: "Study Sheet 4: Anti-Diabetic Agents",
+      clinicalClue: "Outpatient Medication Reconciliation:\n• Class 1 (Increases Insulin Production — Side Effect: Hypoglycemia): Sulfonylureas (Glipizide, Glyburide, Glimepiride), Meglitinides (Repaglinide, Nateglinide), DPP-4 Inhibitors (Sitagliptin/Januvia), GLP-1 Receptor Agonists (Exenatide, Liraglutide, Dulaglutide).\n• Class 2 (Decreases Insulin Resistance & Hepatic Glucose Production): Biguanides & Thiazolidinediones (Pioglitazone/Actos).\n• Class 3 (Decreases Glucose Reabsorption): SGLT Inhibitors (Canagliflozin, Dapagliflozin, Empagliflozin/Jardiance).",
+      clinicalTable: {
+        title: "Mechanism of Action: Non-Insulin Anti-Diabetic Drug Classes",
+        headers: ["Mechanism Category", "Drug Classes", "Key Examples"],
+        rows: [
+          ["Increases Insulin Production (Risk: Hypoglycemia)", "Sulfonylureas, Meglitinides, DPP-4 Inhibitors, GLP-1 Agonists", "Glipizide, Repaglinide, Sitagliptin (Januvia), Liraglutide (Victoza)"],
+          ["Decreases Insulin Resistance & Hepatic Glucose Production", "Biguanides, Thiazolidinediones", "?? (Glucophage), Pioglitazone (Actos)"],
+          ["Decreases Glucose Reabsorption in Kidneys", "SGLT Inhibitors", "Canagliflozin (Invokana), Dapagliflozin (Farxiga), Empagliflozin (Jardiance)"]
+        ]
+      },
+      nursingTask: "What is the generic name of the Biguanide medication that decreases insulin resistance and decreases hepatic glucose production?",
+      placeholder: "MEDICATION NAME",
+      formatHint: "One word (Generic medication name)",
+      pattern: "^[Mm]etformin$",
+      accepted: ["metformin", "metformin (glucophage)"],
+      validationCode: "9044",
+      clinicalRationale: "Metformin (Glucophage) is a Biguanide that works by decreasing insulin resistance and decreasing inappropriate hepatic glucose production without causing hypoglycemia on its own."
+    },
+    {
+      id: 9,
+      tabLabel: "🫀 VASCULAR (9)",
+      sectionTitle: "CHRONIC COMPLICATIONS: MACROVASCULAR DISEASE",
+      studySheetSource: "Study Sheet 3: DM Chronic Complications — Macrovascular",
+      clinicalClue: "Chronic Complication Assessment:\n• Damage to blood vessels occurs secondary to Chronic Hyperglycemia & HTN.\n• Tight glycemic control & blood pressure management help prevent or minimize effects, as there is NO ability to truly reverse damage.\n• Macrovascular complications involve diseases of large & medium-sized blood vessels with greater frequency & earlier onset in patients with DM.",
+      clinicalTable: {
+        title: "Vascular Complications of Diabetes Mellitus",
+        headers: ["Vascular Category", "Vessel Size / Pathology", "Target Systems Affected"],
+        rows: [
+          ["Macrovascular Disease", "Large & medium-sized blood vessels", "1. Cardiovascular\n2. Cerebrovascular\n3. Peripheral Vascular"],
+          ["Microvascular Disease", "Thickening of vessel membranes in capillaries & arterioles (may be present at diagnosis)", "Retinopathy (Eyes), Nephropathy (Kidneys), Neuropathy (Nerves)"]
+        ]
+      },
+      nursingTask: "In the presence of advancing Diabetes Mellitus, by uncontrolled blood glucose and hypertension, patients may present with various vascular complications. Damage to these vessels also cause damage to the nerves that are directly associated with their function. If autonomic neuropathy is present alongside cardiovascular disease, a patient may present with what painless complication?",
+      placeholder: "COMPLICATION",
+      formatHint: "Two words, no spaces",
+      pattern: "^[Mm]yocardial[Ii]nfarction$",
+      accepted: ["myocardialinfarction", "myocardial infarction"],
+      validationCode: "2819",
+      clinicalRationale: "Autonomic neuropathy damages nerves that once provided pain perception to the major central organs thereby resulting in a \"silent\" heart attack."
+    },
+    {
+      id: 10,
+      tabLabel: "🔍 NEURO/RENAL (10)",
+      sectionTitle: "NURSING ASSESSMENT: MICROVASCULAR FLOWCHART",
+      studySheetSource: "Study Sheet 3: DM Chronic Complications — Microvascular",
+      clinicalClue: "Microvascular Assessment Review:\n• Retinopathy is the leading cause of blindness.\n• Nephropathy is the leading cause of ESRD/Dialysis (Prescribe ACEs & ARBs to protect kidneys).\n• Neuropathy includes Sensory Neuropathy (numb/tingling/burning pain; major risk for foot ulcers/amputation; treated with Gabapentin/Pregabalin) and Autonomic Neuropathy.",
+      flowchart: [
+        { title: "NEPHROPATHY (Renal Microvascular)", subtitle: "Leading cause of ESRD/Dialysis → Protected by ACEs & ARBs" },
+        { title: "SENSORY NEUROPATHY (Peripheral Nerves)", subtitle: "Loss of sensation, burning pain, foot ulcer risk → Gabapentin / Pregabalin" },
+        { title: "AUTONOMIC NEUROPATHY (Visceral Nerves)", subtitle: "Painless MI • Resting Tachycardia • Orthostatic Hypotension • Neurogenic Bladder", highlight: true },
+        { title: "?? DELAYED GASTRIC EMPTYING ??", subtitle: "Identify the specific GI autonomic neuropathy condition", missing: true }
+      ],
+      nursingTask: "What is the specific clinical term for delayed gastric emptying caused by Autonomic Neuropathy?",
+      placeholder: "CONDITION NAME",
+      formatHint: "One word",
+      pattern: "^[Gg]astroparesis$",
+      accepted: ["gastroparesis"],
+      validationCode: "6618",
+      clinicalRationale: "Autonomic neuropathy affects visceral organ innervation, causing Gastroparesis (delayed gastric emptying), Neurogenic Bladder (urinary retention), Painless MI, orthostatic hypotension, and sexual dysfunction."
+    },
+    {
+      id: 11,
+      tabLabel: "🥗 DIET & EXERCISE (11)",
+      sectionTitle: "LIFESTYLE PRESCRIPTION: ADA DIET & EXERCISE",
+      studySheetSource: "Study Sheet 1: Treatment — Diet & Exercise",
+      clinicalClue: "Nutrition & Activity Orders:\n• ADA Diet: Carbohydrate-consistent, normal protein, low fat. Carbohydrates must come from fruits, vegetables, whole grains, legumes, and low-fat dairy.\n• Exercise: Minimum 150 minutes/week aerobic + resistance training 3 times/week. Glucose-lowering benefits last up to 48 hours!\n• Safety Warning: Exercise is strictly contraindicated above a specific blood glucose level.",
+      clinicalTable: {
+        title: "ADA Lifestyle Modification Parameters",
+        headers: ["Lifestyle Domain", "Clinical Requirement / Safety Parameter"],
+        rows: [
+          ["ADA Carbohydrate Minimum", "Minimum of ??? g/day from nutrient-dense sources"],
+          ["Weekly Aerobic Exercise", "Minimum 150 minutes/week aerobic + 3x/week resistance"],
+          ["Physiologic Exercise Benefit", "↓ Insulin resistance & BG (lasts up to 48 hrs); ↓ Triglycerides & LDL, ↑ HDL"],
+          ["Exercise Contraindication Alert", "DO NOT EXERCISE IF BG > ??? mg/dL"]
+        ]
+      },
+      nursingTask: "What is the minimum daily grams of carbohydrates on the ADA diet, and above what blood glucose level (mg/dL) must a patient NOT exercise? (Format: ###-###):",
+      placeholder: "###-###",
+      formatHint: "Format: ###-### (Min Daily Carbs in grams - Max BG for Exercise)",
+      pattern: "^130-300$",
+      accepted: ["130-300", "130g-300", "130/300", "130 300"],
+      validationCode: "1303",
+      clinicalRationale: "The ADA diet requires a minimum of 130 g/day of carbohydrates for brain/energy function, and patients must NOT exercise if blood glucose is > 300 mg/dL (as exercise during severe hyperglycemia/insulin deficiency can precipitate ketosis)."
+    },
+    {
+      id: 12,
+      tabLabel: "📖 EDUCATION (12)",
+      sectionTitle: "PATIENT EDUCATION: FOOT CARE & PREVENTION",
+      studySheetSource: "Study Sheet 1 (Foot Care) & Study Sheet 3 (Infection & Annual Prevention)",
+      clinicalClue: "Discharge Education & Health Promotion:\n• Infection Prevention: Due to impaired immune function, treat infections & wounds quickly and diligently. Emphasize hand hygiene & vaccines.\n• Foot Care Protocol: Proper footwear, skin & nail care, avoid injuries, prompt treatment, and [?] inspection.\n• Annual Prevention Schedule: A1C & annual blood work, plus annual [?] exams.",
+      clinicalTable: {
+        title: "Comprehensive Preventive Care Checklist",
+        headers: ["Prevention Category", "Patient Teaching Directives"],
+        rows: [
+          ["Foot Care Protocol", "Proper footwear, Skin & Nail care, [?????] inspection, Avoid injuries, Prompt treatment"],
+          ["Infection Control", "Impaired immune function → Hand hygiene, Vaccines, Prompt wound care"],
+          ["Risk Factor Modification", "Low Na/fat diet, Exercise, Stop alcohol/smoking"],
+          ["Annual Screening", "A1C & Annual blood work + Annual [???] Exams"]
+        ]
+      },
+      nursingTask: "How often must foot inspections be performed, and what organ exam is required annually to screen for retinopathy? (Two words, no spaces, e.g. WeeklyEar):",
+      placeholder: "FREQUENCYORGAN",
+      formatHint: "Two words, no spaces (Inspection Frequency + Exam Organ)",
+      pattern: "^[Dd]aily[Ee]ye(s)?$",
+      accepted: ["dailyeye", "dailyeyes", "daily eye", "daily-eye"],
+      validationCode: "7792",
+      clinicalRationale: "Patients with diabetes require Daily foot inspections to detect neuropathic injuries early, and Annual Eye exams to screen for diabetic retinopathy."
+    }
+  ];
+
+  let activeTab = 0;
+  const solvedState = {};
+
+  function isPuzzleSolved(puzzle, rawVal) {
+    const trimmed = (rawVal || "").trim();
+    if (!trimmed) return false;
+    try {
+      if (new RegExp(puzzle.pattern, "i").test(trimmed)) return true;
+    } catch (e) {}
+    const norm = trimmed.toLowerCase().replace(/\s+/g, "");
+    return puzzle.accepted.some(a => a.toLowerCase().replace(/\s+/g, "") === norm);
+  }
+
+  function initChart() {
+    // Build Sidebar
+    const sidebar = document.getElementById("sidebar-tabs");
+    let sidebarHtml = `<button class="tab-btn active" id="tab-btn-0" onclick="switchTab(0)"><span>📁 CHART OVERVIEW</span></button>`;
+    PUZZLES.forEach(p => {
+      sidebarHtml += `
+        <button class="tab-btn" id="tab-btn-${p.id}" onclick="switchTab(${p.id})">
+          <span>${p.tabLabel}</span>
+          <span id="tab-status-${p.id}" class="tab-status-lock">&#128274;</span>
+        </button>`;
+    });
+    sidebarHtml += `<button class="tab-btn" id="tab-btn-13" onclick="switchTab(13)"><span>📦 DISCHARGE SUMMARY</span></button>`;
+    sidebar.innerHTML = sidebarHtml;
+
+    // Build Puzzle Sections
+    const container = document.getElementById("puzzle-sections-container");
+    let sectionsHtml = "";
+    PUZZLES.forEach(p => {
+      let tableHtml = "";
+      if (p.clinicalTable) {
+        tableHtml = `
+          <div class="ehr-table-box">
+            <div class="ehr-table-title">${p.clinicalTable.title}</div>
+            <table class="ehr-table">
+              <thead>
+                <tr>${p.clinicalTable.headers.map(h => `<th>${h}</th>`).join("")}</tr>
+              </thead>
+              <tbody>
+                ${p.clinicalTable.rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join("")}</tr>`).join("")}
+              </tbody>
+            </table>
+          </div>`;
+      }
+
+      let flowHtml = "";
+      if (p.flowchart) {
+        flowHtml = `
+          <div class="clue-label">📊 CLINICAL CLUE (FLOWCHART)</div>
+          <div class="flow-container">
+            ${p.flowchart.map((s, idx) => `
+              <div class="flow-box ${s.highlight ? 'highlight' : ''} ${s.missing ? 'missing' : ''}">
+                <strong>${s.title}</strong>
+                ${s.subtitle ? `<div style="font-size: 0.8em; color: #475569; margin-top: 4px;">${s.subtitle}</div>` : ''}
+              </div>
+              ${idx < p.flowchart.length - 1 ? '<div class="flow-arrow">&#11015;&#65039;</div>' : ''}
+            `).join("")}
+          </div>`;
+      }
+
+      sectionsHtml += `
+        <div id="section-${p.id}" class="puzzle-section">
+          <div class="section-header-row">
+            <h2 style="margin: 0; font-size: 1.25em;">${p.sectionTitle}</h2>
+            <span class="section-source">${p.studySheetSource}</span>
+          </div>
+          <hr />
+          <div class="clue-label">📄 CLINICAL CLUE</div>
+          <div class="clinical-note">${p.clinicalClue}</div>
+          ${tableHtml}
+          ${flowHtml}
+          <div class="lock-container">
+            <div class="task-label">🎯 NURSING TASK</div>
+            <div class="task-question">${p.nursingTask}</div>
+            <div class="task-format">Required Format: ${p.formatHint}</div>
+            <input
+              type="text"
+              id="puzzle-input-${p.id}"
+              class="lock-input"
+              placeholder="${p.placeholder}"
+              oninput="handlePuzzleInput(${p.id}, this.value)"
+            />
+            <div id="unlock-box-${p.id}" class="unlock-content">
+              <div class="unlock-header">
+                <span>&#9989; Validation Code: ${p.validationCode}</span>
+                <button class="next-tab-btn" onclick="switchTab(${p.id < 12 ? p.id + 1 : 13})">
+                  ${p.id < 12 ? 'Next Section (' + (p.id + 1) + ') &rarr;' : 'Proceed to Discharge Summary &rarr;'}
+                </button>
+              </div>
+              <div class="unlock-rationale"><strong>Clinical Rationale:</strong> ${p.clinicalRationale}</div>
+            </div>
+          </div>
+        </div>`;
+    });
+    container.innerHTML = sectionsHtml;
+
+    // Build Final Verification Grid
+    const finalGrid = document.getElementById("verification-inputs");
+    finalGrid.innerHTML = PUZZLES.map((p, idx) => `
+      <div class="code-cell">
+        <div class="code-cell-label">
+          <span>${p.tabLabel}</span>
+          <span id="final-cell-status-${p.id}" style="color: var(--success-green); font-family: monospace; display: none;">Unlocked</span>
+        </div>
+        <input
+          type="text"
+          id="final-code-${idx}"
+          class="lock-input"
+          style="margin-top: 0; text-align: center; font-weight: bold;"
+          maxlength="4"
+          placeholder="C${p.id}"
+        />
+      </div>
+    `).join("");
+  }
+
+  function switchTab(tabId) {
+    activeTab = tabId;
+    document.querySelectorAll(".puzzle-section").forEach(el => el.classList.remove("active"));
+    document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
+
+    const targetSection = document.getElementById("section-" + tabId);
+    const targetBtn = document.getElementById("tab-btn-" + tabId);
+    if (targetSection) targetSection.classList.add("active");
+    if (targetBtn) targetBtn.classList.add("active");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handlePuzzleInput(puzzleId, val) {
+    const puzzle = PUZZLES.find(p => p.id === puzzleId);
+    if (!puzzle) return;
+
+    const solved = isPuzzleSolved(puzzle, val);
+    solvedState[puzzleId] = solved;
+
+    const inputEl = document.getElementById("puzzle-input-" + puzzleId);
+    const unlockBox = document.getElementById("unlock-box-" + puzzleId);
+    const tabStatus = document.getElementById("tab-status-" + puzzleId);
+    const finalCellStatus = document.getElementById("final-cell-status-" + puzzleId);
+    const finalCodeInput = document.getElementById("final-code-" + (puzzleId - 1));
+
+    if (solved) {
+      inputEl.classList.add("solved");
+      unlockBox.classList.add("visible");
+      tabStatus.className = "tab-status-code";
+      tabStatus.innerHTML = "&#10003; " + puzzle.validationCode;
+      if (finalCellStatus) finalCellStatus.style.display = "inline";
+      if (finalCodeInput && !finalCodeInput.value) {
+        finalCodeInput.value = puzzle.validationCode;
+      }
+    } else {
+      inputEl.classList.remove("solved");
+      unlockBox.classList.remove("visible");
+      tabStatus.className = "tab-status-lock";
+      tabStatus.innerHTML = "&#128274;";
+      if (finalCellStatus) finalCellStatus.style.display = "none";
+    }
+
+    updateProgressCounters();
+  }
+
+  function updateProgressCounters() {
+    const count = Object.values(solvedState).filter(Boolean).length;
+    document.getElementById("header-progress").textContent = `Verified: ${count}/12 Codes`;
+    document.getElementById("banner-unlocked-count").textContent = `Unlocked Codes: ${count} of 12`;
+  }
+
+  function checkFinalCodes() {
+    let allCorrect = true;
+    PUZZLES.forEach((p, idx) => {
+      const input = document.getElementById("final-code-" + idx);
+      if (input.value.trim() !== p.validationCode) {
+        allCorrect = false;
+        input.style.borderColor = "var(--error-red)";
+      } else {
+        input.style.borderColor = "var(--success-green)";
+      }
+    });
+
+    const errorMsg = document.getElementById("final-error");
+    const celeb = document.getElementById("celebration");
+    const formArea = document.getElementById("final-form-area");
+
+    if (allCorrect) {
+      errorMsg.style.display = "none";
+      formArea.style.display = "none";
+      celeb.classList.add("visible");
+    } else {
+      errorMsg.style.display = "block";
+    }
+  }
+
+  function resetChart() {
+    Object.keys(solvedState).forEach(k => delete solvedState[k]);
+    initChart();
+    document.getElementById("final-form-area").style.display = "block";
+    document.getElementById("celebration").classList.remove("visible");
+    document.getElementById("final-error").style.display = "none";
+    updateProgressCounters();
+    switchTab(0);
+  }
+
+  initChart();
+</script>
+
+</body>
+</html>
